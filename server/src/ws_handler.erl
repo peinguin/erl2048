@@ -15,7 +15,7 @@ init({tcp, http}, _Req, _Opts) ->
 websocket_init(_TransportName, Req, _Opts) ->
     State = erl2048game:init(),
     self() ! <<"Hello!">>,
-    erlang:start_timer(1000, self(), <<"Hello!">>),
+    %erlang:start_timer(1000, self(), <<"Hello!">>),
     {ok, Req, State}.
 
 websocket_handle({text, Msg}, Req, State) ->
