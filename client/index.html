@@ -1,112 +1,100 @@
+<!DOCTYPE html>
 <html>
   <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
-    <title>Websocket client</title>
-    <script src="/static/jquery.min.js"></script>
-    <script type="text/javascript">
-      
-      var websocket;
-      $(document).ready(init);
-      
-      function init() {
-          if(!("WebSocket" in window)){  
-              $('#status').append('<p><span style="color: red;">websockets are not supported </span></p>');
-              $("#navigation").hide();  
-          } else {
-              $('#status').append('<p><span style="color: green;">websockets are supported </span></p>');
-              connect();
-          };
-              $("#connected").hide(); 	
-              $("#content").hide(); 	
-      };
+    <meta charset="utf-8">
+    <title>2048 Multiplayer</title>
 
-      function connect()
-      {
-          wsHost = $("#server").val()
-          websocket = new WebSocket(wsHost);
-          showScreen('<b>Connecting to: ' +  wsHost + '</b>'); 
-          websocket.onopen = function(evt) { onOpen(evt) }; 
-          websocket.onclose = function(evt) { onClose(evt) }; 
-          websocket.onmessage = function(evt) { onMessage(evt) }; 
-          websocket.onerror = function(evt) { onError(evt) }; 
-      };  
-      
-      function disconnect() {
-          websocket.close();
-      }; 
+    <link href="/static/style/main.css" rel="stylesheet" type="text/css" />
 
-      function toggle_connection(){
-          if(websocket.readyState == websocket.OPEN){
-              disconnect();
-          } else {
-              connect();
-          };
-      };
+    <link rel="shortcut icon" href="/static/style/favicon.ico" />
+    <link rel="apple-touch-icon" href="/static/style/apple-touch-icon.png">
 
-      function sendTxt() {
-          if(websocket.readyState == websocket.OPEN){
-              txt = $("#send_txt").val();
-              websocket.send(txt);
-              showScreen('sending: ' + txt); 
-          } else {
-               showScreen('websocket is not connected'); 
-          };
-      };
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="HandheldFriendly" content="True">
+    <meta name="MobileOptimized" content="320">
+    <meta name="viewport" content="width=device-width, target-densitydpi=160dpi, initial-scale=1.0, maximum-scale=1, user-scalable=no, minimal-ui" />
 
-      function onOpen(evt) { 
-          showScreen('<span style="color: green;">CONNECTED </span>'); 
-          $("#connected").fadeIn('slow');
-          $("#content").fadeIn('slow');
-      };  
-
-      function onClose(evt) { 
-          showScreen('<span style="color: red;">DISCONNECTED </span>');
-      };  
-
-      function onMessage(evt) { 
-          showScreen('<span style="color: blue;">RESPONSE: ' + evt.data+ '</span>'); 
-      };  
-
-      function onError(evt) {
-          showScreen('<span style="color: red;">ERROR: ' + evt.data+ '</span>');
-      };
-
-      function showScreen(txt) { 
-          $('#output').prepend('<p>' + txt + '</p>');
-      };
-
-      function clearScreen() 
-      { 
-          $('#output').html("");
-      };
-    </script>
+    <script type="text/javascript" src="/static/js/vow/vow.min.js"></script>
+    <script src="/static/js/game/keyboard_input_manager.js"></script>
+    <script type="text/javascript" src="/static/js/websocket.js"></script>
   </head>
 
-  <body>
-    <div id="header">
-      <h1>Websocket client</h1>
-      <div id="status"></div>
+<body>
+  <div id="status"></div>
+  <div class="container">
+    <div class="heading">
+      <h1 class="title">2048</h1>
+      <div class="scores-container">
+        <div class="score-container">0</div>
+        <div class="best-container">0</div>
+      </div>
     </div>
+    <p class="game-intro">Join the numbers and get to the <strong>2048 tile!</strong></p>
 
-
-    <div id="navigation">
-
-      <p id="connecting">
-	<input type='text' id="server" value="ws://localhost:8080/websocket"></input>
-	<button type="button" onclick="toggle_connection()">connection</button>
-      </p>
-      <div id="connected">				
-	<p>
-	  <input type='text' id="send_txt" value=></input>
-	  <button type="button" onclick="sendTxt();">send</button>
-	</p>
+    <div class="game-container">
+      <div class="game-message">
+        <p></p>
+        <div class="lower">
+          <a class="keep-playing-button">Keep going</a>
+          <a class="retry-button">Try again</a>
+        </div>
       </div>
 
-      <div id="content">						
-	<button id="clear" onclick="clearScreen()" >Clear text</button>
-	<div id="output"></div>
+      <div class="grid-container">
+        <div class="grid-row">
+          <div class="grid-cell"></div>
+          <div class="grid-cell"></div>
+          <div class="grid-cell"></div>
+          <div class="grid-cell"></div>
+        </div>
+        <div class="grid-row">
+          <div class="grid-cell"></div>
+          <div class="grid-cell"></div>
+          <div class="grid-cell"></div>
+          <div class="grid-cell"></div>
+        </div>
+        <div class="grid-row">
+          <div class="grid-cell"></div>
+          <div class="grid-cell"></div>
+          <div class="grid-cell"></div>
+          <div class="grid-cell"></div>
+        </div>
+        <div class="grid-row">
+          <div class="grid-cell"></div>
+          <div class="grid-cell"></div>
+          <div class="grid-cell"></div>
+          <div class="grid-cell"></div>
+        </div>
       </div>
 
+      <div class="tile-container">
+
+      </div>
     </div>
-  </body>
+
+    <p class="game-explanation">
+      <strong class="important">How to play:</strong>
+      Use your <strong>arrow keys</strong> to move the tiles. When two tiles with the same number touch, they <strong>merge into one!</strong>
+    </p>
+    <hr>
+    <p>
+      <strong class="important">Note:</strong>
+      This site is not the official version of 2048 and should be used with caution. You can play official version on your phone via
+      <a href="http://git.io/2048">http://git.io/2048</a>.
+    </p>
+    <hr>
+    <p>
+    Created by <a href="http://gabrielecirulli.com" target="_blank">Gabriele Cirulli.</a> Based on <a href="https://itunes.apple.com/us/app/1024!/id823499224" target="_blank">1024 by Veewo Studio</a> and conceptually similar to <a href="http://asherv.com/threes/" target="_blank">Threes by Asher Vollmer.</a>
+    </p>
+  </div>
+
+  <script src="/static/js/main.js"></script>
+  <!--<script src="js/animframe_polyfill.js"></script>
+  
+  <script src="js/html_actuator.js"></script>
+  <script src="js/grid.js"></script>
+  <script src="js/tile.js"></script>
+  <script src="js/local_score_manager.js"></script>
+  <script src="js/game_manager.js"></script>
+  <script src="js/application.js"></script>-->
 </html> 

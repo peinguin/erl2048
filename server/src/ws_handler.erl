@@ -7,30 +7,31 @@
 -export([websocket_info/3]).
 -export([websocket_terminate/3]).
 
--import(erl2048game,[init/0]).
-
 init({tcp, http}, _Req, _Opts) ->
     {upgrade, protocol, cowboy_websocket}.
 
 websocket_init(_TransportName, Req, _Opts) ->
-    State = erl2048game:init(),
-    self() ! {timeout, self(), mochijson2:encode(State)},
+    State = {struct, [{name, <<"Player">>}]},
     {ok, Req, State}.
 
 websocket_handle({text, Msg}, Req, State) ->
-    erlang:display(State),
-    {reply, {text, << "That's what she said! ", Msg/binary >>}, Req, State};
+    case binary_to_list(Msg) of
+        "start"      -> NewState = game:init(State);
+        "move_left"  -> NewState = game:move(left, State);
+        "move_right" -> NewState = game:init(right, State);
+        "move_up"    -> NewState = game:init(up, State);
+        "move_down"  -> NewState = game:init(down, State);
+        _Else -> NewState = State
+    end,
+    {reply, {text, mochijson2:encode(NewState)}, Req, NewState};
+
 websocket_handle(_Data, Req, State) ->
-    erlang:display(State),
     {ok, Req, State}.
 
-websocket_info({timeout, _Ref, Msg}, Req, State) ->
-    erlang:display(State),
+websocket_info({send, Msg}, Req, State) ->
     {reply, {text, Msg}, Req, State};
 websocket_info(_Info, Req, State) ->
-    erlang:display(State),
     {ok, Req, State}.
 
 websocket_terminate(_Reason, _Req, _State) ->
-    erlang:display(_State),
     ok.
