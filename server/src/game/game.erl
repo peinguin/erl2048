@@ -16,12 +16,11 @@ init(State) ->
         ]
     }.
 
-addStartTiles(Grid, N) ->
+addStartTiles(Grid, 0) -> 
+    Grid;
+addStartTiles(Grid, N) -> 
     NewGrid = addRandomTile(Grid),
-    if
-        N > 0 -> addStartTiles(NewGrid, N - 1);
-        true -> NewGrid
-    end.
+    addStartTiles(NewGrid, N - 1).
 addStartTiles(Grid) ->
     addStartTiles(Grid, 2).
 
@@ -32,7 +31,7 @@ addRandomTile(Grid) ->
                 true -> Tile = 4;
                 false -> Tile = 2
             end,
-            grid:insertTile(grid:randomAvailableCell(), Tile, Grid);
+            grid:insertTile(grid:randomAvailableCell(Grid), Tile, Grid);
         false -> Grid
     end.
 
