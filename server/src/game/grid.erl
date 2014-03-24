@@ -1,9 +1,14 @@
 -module(grid).
 
--export([build/0, cellsAvailable/1, randomAvailableCell/1, insertTile/3, availableCells/1]).
+-export([build/0, cellsAvailable/1, randomAvailableCell/1, insertTile/3, availableCells/1, cellContent/2, removeTile/2, moveTile/3, size/0]).
+
+-define(SIZE, 4).
+
+size() ->
+    ?SIZE.
 
 build() ->
-    [[null || _ <- lists:seq(1, 4)] || _ <- lists:seq(1, 4)].
+    [[null || _ <- lists:seq(1, ?SIZE)] || _ <- lists:seq(1, ?SIZE)].
 
 availableCells(Grid) ->
     lists:append(
@@ -21,7 +26,6 @@ availableCells([Grid | Tail ], N) ->
     end;
 availableCells([], _) ->
     [].
-    
 
 setY([{Cell, Y}|Tail]) -> 
     [ setY(Cell, Y) | setY(Tail)];
@@ -42,3 +46,13 @@ randomAvailableCell(Grid) ->
 insertTile({X, Y}, Tile, Grid) ->
     Row = lists:nth(Y,Grid),
     lists:sublist(Grid,Y - 1) ++ [ lists:sublist(Row,X - 1) ++ [Tile] ++ lists:nthtail(X,Row)] ++ lists:nthtail(Y,Grid).
+
+cellContent({ X, Y }, Grid) ->
+    lists:nth(X,lists:nth(Y,Grid)).
+
+removeTile({ X, Y }, Grid) ->
+    Row = lists:nth(Y,Grid),
+    lists:sublist(Grid,Y - 1) ++ [ lists:sublist(Row,X - 1) ++ [null] ++ lists:nthtail(X,Row)] ++ lists:nthtail(Y,Grid).
+
+moveTile(Cell, Next, Grid) ->
+    insertTile(Next, grid:cellContent(Cell), removeTile(Cell, Grid)).

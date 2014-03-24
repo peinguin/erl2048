@@ -1,22 +1,56 @@
 var SERVER = 'ws://127.0.0.1:8080/websocket';
 
 var MyGame = function(){
-  var self = this;
+  var self = this,
+    actuator,
+    inputManager;
 
-  self.move = function(evt){
+  self.move = function(direction){
+    // 0: up, 1: right, 2:down, 3: left
 
+    if(direction === 0){
+      direction = 'up';
+    }else if(direction === 1){
+      direction = 'right';
+    }else if(direction === 2){
+      direction = 'down';
+    }else if(direction === 3){
+      direction = 'left';
+    }
+    websocket.send('move_' + direction);
   };
   self.restart = function(evt){
-
+    websocket.send('start');
   };
   self.keepPlaying = function(evt){
 
   };
   self.wsHandler = function(evt){
-    console.log(JSON.parse(evt.data));
-  }
+    var game = JSON.parse(evt.data);
 
-  var inputManager = new KeyboardInputManager;
+    var grid = {cells: []};
+    game.grid.forEach(function (column, y) {
+      var row = [];
+      column.forEach(function (cell, x) {
+        if(cell){
+          row.push({
+            value:cell.value,
+            x: x,
+            y: y
+          });
+        }
+      });
+      grid.cells.push(row);
+    });
+
+    actuator.actuate(grid, {
+      score:     game.score,
+      bestScore: 0
+    });
+  };
+
+  inputManager = new KeyboardInputManager;
+  actuator     = new HTMLActuator;
 
   inputManager.on("move", self.move);
   inputManager.on("restart", self.restart);
@@ -24,7 +58,7 @@ var MyGame = function(){
 
   websocket.on(self.wsHandler);
 
-  websocket.send('start');
+  self.restart();
 };
 
 if(!("WebSocket" in window)){
