@@ -58,78 +58,98 @@ buildTraversals({ _ , _ }) ->
     buildTraversals().
 
 prepareTiles( Grid ) ->
-    prepareTiles( Grid, 0).
+    prepareTiles( Grid, 1).
 prepareTiles([], _) ->
-    null;
+    [];
 prepareTiles([Row | Tail], Y) ->
-    [ prepareTileY(Row, 0, Y) | prepareTiles(Tail, Y + 1)].
+    [ prepareTileY(Row, 1, Y) | prepareTiles(Tail, Y + 1)].
 prepareTileY([], _, _) ->
-    null;
+    [];
 prepareTileY([Cell | Tail], X, Y) ->
     [prepareTileX(Cell, X, Y) | prepareTileY(Tail, X + 1, Y) ].
 prepareTileX(Tile, X, Y) ->
     tile:prepareTiles(Tile, {X, Y}).
 
-process_travesals_y([], _, Grid, Vector) ->
+process_travesals_y([], _, _, Grid) ->
     Grid;
-process_travesals_y(_, [], Grid, Vector) ->
+process_travesals_y(_, [], _, Grid) ->
     Grid;
-process_travesals_y([ Y | Tail ], TraversalsX, Grid, Vector) ->
+process_travesals_y([ Y | Tail ], TraversalsX, Vector, Grid) ->
     process_travesals_y(
         Tail,
         TraversalsX,
-        process_travesals_y( Y, TraversalsX, Grid, Vector),
-        Vector
+        Vector,
+        process_travesals_y( Y, TraversalsX, Vector, Grid)
     );
-process_travesals_y(Y, [ X | Tail ], Grid, Vector) ->
-    process_travesals_y(Y, Tail, process_travesals_y( Y, X, Grid, Vector ), Vector);
-process_travesals_y( Y, X, Grid, Vector ) ->
-    moveTile({ X, Y }, Grid, Vector).
+process_travesals_y(Y, [ X | Tail ], Vector, Grid) ->
+    process_travesals_y(Y, Tail, Vector, process_travesals_y( Y, X, Vector, Grid ));
+process_travesals_y( Y, X, Vector, Grid ) ->
+    NewGrid = moveTile({ X, Y }, Vector, Grid),
+    if
+        NewGrid =:= false -> Grid;
+        true -> NewGrid
+    end.
 
-findFarthestPosition({X, Y}, Grid, Vector) ->
-    .
+findFarthestPosition({X, Y}, {VecX, VecY}, Grid) ->
 
-moveTile(null, _, _) -> 
-    null;
-moveTile(Cell, Grid, Vector) ->
-    { Farthest, Next } = findFarthestPosition(Cell, Grid, Vector),
-    NextTile  = grid:cellContent(Next),
+    Next = { X + VecX, Y + VecY },
 
+    case grid:cellAvailable(Next, Grid) of
+        true -> 
+            findFarthestPosition(Next, {VecX, VecY}, Grid);
+        false -> 
+            {
+                {X, Y},
+                Next % Used to check if a merge is required
+            }
+    end.
+
+moveTile(Cell, Vector, Grid) ->
     Tile = grid:cellContent(Cell, Grid),
-    {struct, CurrJsonData} = Tile,
-    CurrValue = proplists:get_value(value, CurrJsonData),
 
-    {struct, NextJsonData} = Next,
-    NextValue = proplists:get_value(value, NextJsonData),
+    case Tile =:= null of
+        true -> Grid;
+        false ->
+            { Farthest, Next } = findFarthestPosition(Cell, Vector, Grid),
 
-%    Moved = 
-        if
-            Next =:= null,
-            CurrValue =:= NextValue,
-            proplists:get_value(mergedFrom, CurrJsonData) =:= null
-            ->
-                Merged = {
-                    struct,
-                    [
-                        {value, CurrValue * 2},
-                        {mergedFrom, [Tile, Next]},
-                        {previousPosition, null}
-                    ]
-                },
-                grid:removeTile(Cell, grid:insertTile(Merged, Grid))
+            {struct, CurrJsonData} = Tile,
+            CurrValue = proplists:get_value(value, CurrJsonData),
+            CurrMerged = proplists:get_value(mergedFrom, CurrJsonData),
 
-    %          // Converge the two tiles' positions
-    %          tile.updatePosition(positions.next);
+            NextValue = case Next =:= null of
+                    false -> 
+                        NextTile = grid:cellContent(Next, Grid),
+                        case NextTile =:= null of
+                            true -> null;
+                            false -> proplists:get_value(value, NextTile)
+                        end;
+                    true -> null
+                end,
 
-    %          // Update the score
-    %          self.score += merged.value;
+            if  CurrValue =:= NextValue,
+                CurrMerged =:= null
+                ->
+                    Merged = {
+                        struct,
+                        [
+                            {value, CurrValue * 2},
+                            {mergedFrom, [Tile, Next]},
+                            {previousPosition, null}
+                        ]
+                    },
+                    grid:removeTile(Cell, grid:insertTile(Cell, Merged, Grid))
 
-    %          // The mighty 2048 tile
-    %          if (merged.value === 2048) self.won = true;
-            ;
-            true ->
-                grid:moveTile(Cell, Next, Grid)
-        end.
+        %          // Update the score
+        %          self.score += merged.value;
+
+        %          // The mighty 2048 tile
+        %          if (merged.value === 2048) self.won = true;
+                ;
+                true ->
+                    erlang:display({149, Cell, Farthest}),
+                    grid:moveTile(Cell, Farthest, Grid)
+            end
+    end.
 
 move(left, State) ->
     move(getVector(left), State);
@@ -151,8 +171,8 @@ move(Vector, State) ->
     {struct, JsonData} = State,
     Grid = prepareTiles(proplists:get_value(grid, JsonData)),
 
-    NewGrid = process_travesals_y(TraversalsY, TraversalsX, Grid, Vector),
-erlang:display(NewGrid),
+    NewGrid = process_travesals_y(TraversalsY, TraversalsX, Vector, Grid),
+erlang:display({175,NewGrid}),
     {
         struct,
         [
@@ -168,6 +188,4 @@ erlang:display(NewGrid),
 %    if (!this.movesAvailable()) {
 %      this.over = true; // Game over!
 %    }
-
-%    this.actuate();
     .
