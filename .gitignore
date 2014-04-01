@@ -1,3 +1,4 @@
 server/deps/*
 server/ebin/*
 server/erl_crash.dump
+server/.rebar
