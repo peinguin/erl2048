@@ -18,9 +18,9 @@ websocket_handle({text, Msg}, Req, State) ->
     case binary_to_list(Msg) of
         "start"      -> NewState = game:init(State);
         "move_left"  -> NewState = game:move(left, State);
-        "move_right" -> NewState = game:init(right, State);
-        "move_up"    -> NewState = game:init(up, State);
-        "move_down"  -> NewState = game:init(down, State);
+        "move_right" -> NewState = game:move(right, State);
+        "move_up"    -> NewState = game:move(up, State);
+        "move_down"  -> NewState = game:move(down, State);
         _Else -> NewState = State
     end,
     {reply, {text, mochijson2:encode(NewState)}, Req, NewState};
