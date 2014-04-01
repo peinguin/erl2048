@@ -4,7 +4,7 @@
 
 prepareTiles(null, _) ->
     null;
-prepareTiles(Tile, Position) ->
+prepareTiles(Tile, { X, Y }) ->
     {struct, JsonData} = Tile,
     Value = proplists:get_value(value, JsonData),
 
@@ -13,7 +13,7 @@ prepareTiles(Tile, Position) ->
         [
             {value, Value},
             {mergedFrom, null},
-            {previousPosition, Position}
+            {previousPosition, {struct, [{ x, X},{ y, Y }]}}
         ]
     }.
 init(Value) ->

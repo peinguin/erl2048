@@ -72,7 +72,7 @@ removeTile({ X, Y }, Grid) ->
 moveTile(Cell, Cell, Grid) ->
     Grid;
 moveTile(Cell, Next, Grid) ->
-    insertTile(Next, grid:cellContent(Cell), removeTile(Cell, Grid)).
+    insertTile(Next, grid:cellContent(Cell, Grid), removeTile(Cell, Grid)).
 
 withinBounds({X, Y}) when
     (X > 0), (X =< ?SIZE), 
@@ -83,6 +83,6 @@ withinBounds(_) ->
 
 cellAvailable(Cell, Grid) ->
     case grid:withinBounds(Cell) of
-        true -> cellContent(Cell, Grid) =/= null;
+        true -> cellContent(Cell, Grid) =:= null;
         false -> false
     end.

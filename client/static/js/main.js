@@ -38,6 +38,8 @@ var MyGame = function(){
             x: x,
             y: y
           });
+
+          console.log(cell);
         }
       });
       grid.cells.push(row);

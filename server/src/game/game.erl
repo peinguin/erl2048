@@ -104,7 +104,7 @@ findFarthestPosition({X, Y}, {VecX, VecY}, Grid) ->
             }
     end.
 
-moveTile(Cell, Vector, Grid) ->
+moveTile(Cell, Vector, Grid) -> 
     Tile = grid:cellContent(Cell, Grid),
 
     case Tile =:= null of
@@ -116,15 +116,17 @@ moveTile(Cell, Vector, Grid) ->
             CurrValue = proplists:get_value(value, CurrJsonData),
             CurrMerged = proplists:get_value(mergedFrom, CurrJsonData),
 
-            NextValue = case Next =:= null of
-                    false -> 
-                        NextTile = grid:cellContent(Next, Grid),
-                        case NextTile =:= null of
-                            true -> null;
-                            false -> proplists:get_value(value, NextTile)
-                        end;
-                    true -> null
-                end,
+            NextTile = if
+                Next =:= null -> null;
+                true -> grid:cellContent(Next, Grid)
+            end,
+
+            NextValue = if
+                NextTile =:= null -> null;
+                true ->
+                    {struct, NextJsonData} = NextTile,
+                    proplists:get_value(value, NextJsonData)
+            end,
 
             if  CurrValue =:= NextValue,
                 CurrMerged =:= null
@@ -133,11 +135,11 @@ moveTile(Cell, Vector, Grid) ->
                         struct,
                         [
                             {value, CurrValue * 2},
-                            {mergedFrom, [Tile, Next]},
+                            {mergedFrom, [Tile, NextTile]},
                             {previousPosition, null}
                         ]
                     },
-                    grid:removeTile(Cell, grid:insertTile(Cell, Merged, Grid))
+                    grid:insertTile(Next, Merged, grid:removeTile(Cell, Grid))
 
         %          // Update the score
         %          self.score += merged.value;
@@ -146,7 +148,6 @@ moveTile(Cell, Vector, Grid) ->
         %          if (merged.value === 2048) self.won = true;
                 ;
                 true ->
-                    erlang:display({149, Cell, Farthest}),
                     grid:moveTile(Cell, Farthest, Grid)
             end
     end.
@@ -154,14 +155,11 @@ moveTile(Cell, Vector, Grid) ->
 move(left, State) ->
     move(getVector(left), State);
 move(right, State) -> 
-    {struct, JsonData} = State,
-    {struct, mochilists:set_default({lalal, left}, proplists:delete(lalal, JsonData))};
+    move(getVector(right), State);
 move(up, State) -> 
-    {struct, JsonData} = State,
-    {struct, mochilists:set_default({lalal, left}, proplists:delete(lalal, JsonData))};
+    move(getVector(up), State);
 move(down, State) -> 
-    {struct, JsonData} = State,
-    {struct, mochilists:set_default({lalal, left}, proplists:delete(lalal, JsonData))};
+    move(getVector(down), State);
 move(Vector, State) ->
     %TODO:
     %if (this.isGameTerminated()) return; // Don't do anything if the game's over
@@ -171,19 +169,17 @@ move(Vector, State) ->
     {struct, JsonData} = State,
     Grid = prepareTiles(proplists:get_value(grid, JsonData)),
 
-    NewGrid = process_travesals_y(TraversalsY, TraversalsX, Vector, Grid),
-erlang:display({175,NewGrid}),
-    {
-        struct,
-        [
-            {grid , NewGrid},
-            {name , proplists:get_value(name, JsonData)},
-            {score, 0}
-        ]
-    }
+    NewGrid = process_travesals_y(
+        TraversalsY,
+        TraversalsX,
+        Vector,
+        Grid
+    ),
 
-%  if (moved) {
-%    this.addRandomTile();
+    if
+        Grid =/= NewGrid -> {struct,[ { grid, addRandomTile(NewGrid) } | proplists:delete(grid, JsonData) ]};
+        true -> {struct,[ { grid, NewGrid } | proplists:delete(grid, JsonData) ]}
+    end
 
 %    if (!this.movesAvailable()) {
 %      this.over = true; // Game over!
