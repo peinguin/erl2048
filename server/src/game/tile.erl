@@ -13,7 +13,7 @@ prepareTiles(Tile, { X, Y }) ->
         [
             {value, Value},
             {mergedFrom, null},
-            {previousPosition, {struct, [{ x, X},{ y, Y }]}}
+            {previousPosition, {struct, [{ x, X - 1},{ y, Y - 1 }]}}
         ]
     }.
 init(Value) ->

@@ -66,8 +66,7 @@ cellContent({ X, Y }, Grid) ->
     end.
 
 removeTile({ X, Y }, Grid) ->
-    Row = lists:nth(Y,Grid),
-    lists:sublist(Grid,Y - 1) ++ [ lists:sublist(Row,X - 1) ++ [null] ++ lists:nthtail(X,Row)] ++ lists:nthtail(Y,Grid).
+    insertTile({X, Y}, null, Grid).
 
 moveTile(Cell, Cell, Grid) ->
     Grid;

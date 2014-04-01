@@ -34,12 +34,12 @@ var MyGame = function(){
       column.forEach(function (cell, x) {
         if(cell){
           row.push({
-            value:cell.value,
-            x: x,
-            y: y
+            value:            cell.value,
+            x:                x,
+            y:                y,
+            previousPosition: cell.previousPosition,
+            mergedFrom:       cell.mergedFrom
           });
-
-          console.log(cell);
         }
       });
       grid.cells.push(row);

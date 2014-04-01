@@ -118,24 +118,40 @@ moveTile(Cell, Vector, Grid) ->
 
             NextTile = if
                 Next =:= null -> null;
-                true -> grid:cellContent(Next, Grid)
+                true ->
+                    grid:cellContent(Next, Grid)
             end,
 
-            NextValue = if
-                NextTile =:= null -> null;
+            {NextValue, NextJsonData} = if
+                NextTile =:= null -> {null, null};
                 true ->
-                    {struct, NextJsonData} = NextTile,
-                    proplists:get_value(value, NextJsonData)
+                    JsonData = element(2, NextTile),
+                    {proplists:get_value(value, JsonData), JsonData}
             end,
 
             if  CurrValue =:= NextValue,
                 CurrMerged =:= null
                 ->
+
+                    {NX, NY} = Next,
+                    {X, Y} = {NX - 1,NY - 1},
+
                     Merged = {
                         struct,
                         [
                             {value, CurrValue * 2},
-                            {mergedFrom, [Tile, NextTile]},
+                            {mergedFrom, [
+                                {struct, [
+                                    {x, X},
+                                    {y, Y} |
+                                    CurrJsonData
+                                ]},
+                                {struct, [
+                                    {x, X},
+                                    {y, Y} |
+                                    NextJsonData
+                                ]}
+                            ]},
                             {previousPosition, null}
                         ]
                     },
