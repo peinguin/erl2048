@@ -15,13 +15,29 @@ websocket_init(_TransportName, Req, _Opts) ->
     {ok, Req, State}.
 
 websocket_handle({text, Msg}, Req, State) ->
-    case binary_to_list(Msg) of
-        "start"      -> NewState = game:init(State);
-        "move_left"  -> NewState = game:move(left, State);
-        "move_right" -> NewState = game:move(right, State);
-        "move_up"    -> NewState = game:move(up, State);
-        "move_down"  -> NewState = game:move(down, State);
-        _Else -> NewState = State
+    Message = mochijson2:decode(Msg, [{format, proplist}]),
+    Action =  binary_to_list(proplists:get_value(<<"action">>, Message)),
+    NewState = case Action of
+        "start" ->
+            game:init(State);
+        "move"  ->
+            game:move(list_to_atom(binary_to_list(proplists:get_value(<<"value">>, Message))), State);
+        "newName" ->
+            NewName = proplists:get_value(<<"value">>, Message),
+            JsonData = element(2, State),
+
+            User = proplists:get_value(user, JsonData),
+            {struct,UserJsonData} = User,
+
+            Id = proplists:get_value(id, UserJsonData),
+
+            db:changeName(Id, NewName),
+            
+            {struct, [
+                { user, { struct, [ { name, NewName },{ id, Id } ] } }
+                | proplists:delete(user, JsonData)
+            ]};
+        _Else -> State
     end,
     {reply, {text, mochijson2:encode(NewState)}, Req, NewState};
 

@@ -4,14 +4,14 @@
 
 init(State) ->
 
-    {struct, JsonData} = State,
-    Name = proplists:get_value(name, JsonData),
+    Name = proplists:get_value(name, element(2, State)),
+    {rowid, Id} = db:createUser(Name),
 
     {
         struct,
         [
             {grid ,addStartTiles(grid:build())},
-            {name ,Name},
+            {user ,{ struct, [{name, Name},{id, Id}]}},
             {score,0},
             {scores, db:select()},
             {won, false},
@@ -61,6 +61,9 @@ buildTraversals({ _ , 1 }) ->
 buildTraversals({ _ , _ }) ->
     buildTraversals().
 
+prepareTiles( [{_Key, _Value} | _Tail ] ) ->
+    JsonData = [{_Key, _Value} | _Tail ],
+    [{ grid, prepareTiles(proplists:get_value(grid, JsonData)) } | proplists:delete(grid, JsonData) ];
 prepareTiles( Grid ) ->
     prepareTiles( Grid, 1).
 prepareTiles([], _) ->
@@ -133,7 +136,7 @@ moveTile(Cell, Vector, JsonData) ->
             if  CurrValue =:= NextValue,
                 NextMerged =:= null
                 ->
-                    MergedValue = CurrValue * 2,erlang:display([Tile,NextTile]),
+                    MergedValue = CurrValue * 2,
                     Merged = {
                         struct,
                         [
@@ -190,7 +193,7 @@ move(Vector, State) ->
     of
         true -> State;
         _Else ->
-            PreparedJsonData = [{ grid, prepareTiles(proplists:get_value(grid, JsonData)) } | proplists:delete(grid, JsonData) ],
+            PreparedJsonData = updateBestScore(prepareTiles(JsonData)),
 
             { TraversalsX, TraversalsY } = buildTraversals(Vector),
 
@@ -204,6 +207,13 @@ move(Vector, State) ->
             if
                 PreparedJsonData =/= NewJsonData -> %If changed - add new tile
                     Grid = proplists:get_value(grid, NewJsonData),
+                    {struct, UserJsonData} = proplists:get_value(user, NewJsonData),
+
+                    db:insert(
+                        proplists:get_value(score, NewJsonData),
+                        proplists:get_value(id, UserJsonData)
+                    ),
+
                     Over = case movesAvailable(Grid) of
                         true -> false;
                         fale -> true % Game over!
@@ -218,3 +228,6 @@ move(Vector, State) ->
 
 movesAvailable(_) ->
     true.
+
+updateBestScore(JsonData) ->
+    [{ scores, db:select() } | proplists:delete(scores, JsonData) ].
