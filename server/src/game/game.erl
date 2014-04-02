@@ -4,14 +4,23 @@
 
 init(State) ->
 
-    Name = proplists:get_value(name, element(2, State)),
-    {rowid, Id} = db:createUser(Name),
+    StateUser = proplists:get_value(user, element(2, State)),
+    StateUserJsonData = element(2, StateUser),
+
+    User = case proplists:get_value(id, StateUserJsonData) of
+        null ->
+            Name = proplists:get_value(name, StateUserJsonData),
+            {rowid, Id} = db:createUser(Name),
+            { struct, [{name, Name},{id, Id}]};
+        _Else ->
+            StateUser
+    end,
 
     {
         struct,
         [
             {grid ,addStartTiles(grid:build())},
-            {user ,{ struct, [{name, Name},{id, Id}]}},
+            {user , User},
             {score,0},
             {scores, db:select()},
             {won, false},
@@ -209,10 +218,16 @@ move(Vector, State) ->
                     Grid = proplists:get_value(grid, NewJsonData),
                     {struct, UserJsonData} = proplists:get_value(user, NewJsonData),
 
-                    db:insert(
-                        proplists:get_value(score, NewJsonData),
-                        proplists:get_value(id, UserJsonData)
-                    ),
+                    NewScore = proplists:get_value(score, NewJsonData),
+                    Score = proplists:get_value(score, PreparedJsonData),
+
+                    case NewScore > Score of true ->
+                        db:insert(
+                            proplists:get_value(score, NewJsonData),
+                            proplists:get_value(id, UserJsonData)
+                        );
+                        _Else -> undefined
+                    end,
 
                     Over = case movesAvailable(Grid) of
                         true -> false;

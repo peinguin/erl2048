@@ -27,9 +27,19 @@ select() ->
     formatScores(Rows).
 
 insert(Score, Player) ->
-    sqlite3:delete(db, users, {userid, Player}),
-    sqlite3:write(db, scores, [{userid, Player}, {score, Score}]),
-    sqlite3:sql_exec(db, "DELETE FROM scores WHERE id IN (SELECT id FROM scores ORDER BY score desc LIMIT 1 OFFSET 10)").
+    [{columns,_},{rows,Rows}] = sqlite3:sql_exec(db, "SELECT score FROM scores WHERE userid = ?", [{1,Player}]),
+    DBScore = if
+        length(Rows) > 0  -> element(1,hd(Rows));
+        true -> 0
+    end,
+erlang:display({Score,DBScore}),
+
+    if Score > DBScore ->
+        sqlite3:delete(db, scores, {userid, Player}),
+        sqlite3:write(db, scores, [{userid, Player}, {score, Score}]),
+        sqlite3:sql_exec(db, "DELETE FROM scores WHERE id IN (SELECT id FROM scores ORDER BY score desc LIMIT 1 OFFSET 10)");
+        true -> undefined
+    end.
 
 formatScores([]) ->
     [];

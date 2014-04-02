@@ -5,3 +5,27 @@
     width:     157px;
     clear:     right;
 }
+#scores{
+    position: absolute;
+    display: none;
+    z-index: 10;
+}
+.score{
+    background: none repeat scroll 0 0 #EDCF72;
+    color: #776E65;
+    height: 40px;
+    line-height: 40px;
+    width: 200px;
+}
+.score .score{
+    width: 50px;
+    background-color: #F2B179;
+    color: #F9F6F2;
+    float: left;
+}
+.score .name{
+    width: 140px;
+    background-color: #EDE0C8;
+    margin-right: 10px;
+    float: left;
+}

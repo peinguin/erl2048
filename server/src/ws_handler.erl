@@ -11,17 +11,21 @@ init({tcp, http}, _Req, _Opts) ->
     {upgrade, protocol, cowboy_websocket}.
 
 websocket_init(_TransportName, Req, _Opts) ->
-    State = {struct, [{name, <<"Player">>}]},
+    State = {struct, [ 
+        { user, { struct, [{id, null},{name, <<"Player">>}] } } 
+    ]},
     {ok, Req, State}.
 
 websocket_handle({text, Msg}, Req, State) ->
     Message = mochijson2:decode(Msg, [{format, proplist}]),
     Action =  binary_to_list(proplists:get_value(<<"action">>, Message)),
-    NewState = case Action of
+    {NewState, Response} = case Action of
         "start" ->
-            game:init(State);
+            TmpState = game:init(State),
+            {TmpState, TmpState};
         "move"  ->
-            game:move(list_to_atom(binary_to_list(proplists:get_value(<<"value">>, Message))), State);
+            TmpState = game:move(list_to_atom(binary_to_list(proplists:get_value(<<"value">>, Message))), State),
+            {TmpState, TmpState};
         "newName" ->
             NewName = proplists:get_value(<<"value">>, Message),
             JsonData = element(2, State),
@@ -32,14 +36,18 @@ websocket_handle({text, Msg}, Req, State) ->
             Id = proplists:get_value(id, UserJsonData),
 
             db:changeName(Id, NewName),
-            
-            {struct, [
-                { user, { struct, [ { name, NewName },{ id, Id } ] } }
-                | proplists:delete(user, JsonData)
-            ]};
+
+            TmpState = {struct, [
+                    { user, { struct, [ { name, NewName },{ id, Id } ] } }
+                    | proplists:delete(user, JsonData)
+                ]},
+            {
+                TmpState,
+                {struct, [{ user, { struct, [ { name, NewName },{ id, Id } ] } }]}
+            };
         _Else -> State
     end,
-    {reply, {text, mochijson2:encode(NewState)}, Req, NewState};
+    {reply, {text, mochijson2:encode(Response)}, Req, NewState};
 
 websocket_handle(_Data, Req, State) ->
     {ok, Req, State}.

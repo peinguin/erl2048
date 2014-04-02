@@ -5,7 +5,9 @@ var MyGame = function(){
     actuator,
     inputManager,
     playername = document.getElementById('playername'),
-    toMove = true;
+    toMove = true,
+    scoresEl = document.getElementById('scores'),
+    bestContainer = document.getElementsByClassName('best-container')[0];;
 
   self.move = function(direction){
     // 0: up, 1: right, 2:down, 3: left
@@ -62,11 +64,36 @@ var MyGame = function(){
         grid.cells.push(row);
       });
 
-      var scores = game.scores;
+      var scores = game.scores,
+        bestScore = 0;
+      if(scores && scores.length>0){
+        bestScore = scores[0].score;
+
+        while (scoresEl.firstChild) {
+          scoresEl.removeChild(scoresEl.firstChild);
+        }
+
+        scores.forEach(function(score){
+          var div = document.createElement('Div');
+          var name = document.createElement('Div');
+          var scoreEl = document.createElement('Div');
+
+          div.setAttribute("class", 'score');
+          name.setAttribute("class", 'name');
+          scoreEl.setAttribute("class", 'score');
+
+          name.appendChild(document.createTextNode(score.name));
+          scoreEl.appendChild(document.createTextNode(score.score));
+
+          div.appendChild(name);
+          div.appendChild(scoreEl);
+          scoresEl.appendChild(div);
+        });
+      }
 
       actuator.actuate(grid, {
         score:     game.score,
-        bestScore: scores.length > 0?scores[0].score:0,
+        bestScore: bestScore,
         score: game.score,
         won: game.won,
         over: game.over,
@@ -75,9 +102,9 @@ var MyGame = function(){
     }
 
     //playername actuator
-    if(game.name){
+    if(game.user){
       if(playername.value !== playername){
-        playername.value = game.name;
+        playername.value = game.user.name;
       }
     }
   };
@@ -110,6 +137,15 @@ var MyGame = function(){
       value: this.value
     }));
   };
+
+  bestContainer.onmousemove = function(e){
+    scoresEl.style.display = 'block';
+    scoresEl.style.left = e.pageX + 5 + 'px';
+    scoresEl.style.top = e.pageY + 5 + 'px';
+  }
+  bestContainer.onmouseout = function(){console.log('dsdds');
+    scoresEl.style.display = 'none';
+  }
 
   self.restart();
 };
