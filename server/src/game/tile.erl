@@ -1,17 +1,14 @@
 -module(tile).
 
--export([init/1, init/0, prepareTiles/2]).
+-export([init/1, init/0, prepare/2]).
 
-prepareTiles(null, _) ->
+prepare(null, _) ->
     null;
-prepareTiles(Tile, { X, Y }) ->
-    {struct, JsonData} = Tile,
-    Value = proplists:get_value(value, JsonData),
-
+prepare(Tile, { X, Y }) ->
     {
         struct,
         [
-            {value, Value},
+            {value, proplists:get_value(value, element(2, Tile))},
             {mergedFrom, null},
             {previousPosition, {struct, [{ x, X - 1},{ y, Y - 1 }]}}
         ]

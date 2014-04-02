@@ -19,7 +19,9 @@ start(_Type, _Args) ->
     ]),
     {ok, _} = cowboy:start_http(http, 100, [{port, 8080}],
         [{env, [{dispatch, Dispatch}]}]),
+    {ok, _} = db:start_link(),
     erl2048_sup:start_link().
 
 stop(_State) ->
+    {ok, _} = db:stop(),
     ok.

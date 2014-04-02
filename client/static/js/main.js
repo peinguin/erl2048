@@ -33,6 +33,12 @@ var MyGame = function(){
       var row = [];
       column.forEach(function (cell, x) {
         if(cell){
+          if(cell.mergedFrom){
+            cell.mergedFrom.forEach(function(tile){
+              tile['x'] = x;
+              tile['y'] = y;
+            });
+          }
           row.push({
             value:            cell.value,
             x:                x,
@@ -47,7 +53,11 @@ var MyGame = function(){
 
     actuator.actuate(grid, {
       score:     game.score,
-      bestScore: 0
+      bestScore: game.scores[0].score,
+      score: game.score,
+      won: game.won,
+      over: game.over,
+      keepPlaying: game.keepPlaying
     });
   };
 
