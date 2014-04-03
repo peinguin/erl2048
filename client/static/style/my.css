@@ -16,16 +16,22 @@
     height: 40px;
     line-height: 40px;
     width: 200px;
+    border-radius: 10px;
+    overflow: hidden;
 }
 .score .score{
-    width: 50px;
+    width: 60px;
     background-color: #F2B179;
     color: #F9F6F2;
     float: left;
+    overflow: hidden;
+    border-radius: 10px;
 }
 .score .name{
-    width: 140px;
+    width: 130px;
     background-color: #EDE0C8;
     margin-right: 10px;
     float: left;
+    overflow: hidden;
+    border-radius: 10px;
 }
