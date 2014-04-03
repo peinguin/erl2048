@@ -241,8 +241,7 @@ move(Vector, State) ->
                 true -> %return state otherwise
                     {struct,PreparedJsonData}
             end
-    end
-.
+    end.
 
 movesAvailable(_) ->
     true.
