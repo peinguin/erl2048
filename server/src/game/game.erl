@@ -214,7 +214,7 @@ move(Vector, State) ->
             ),
 
             NewGrid = proplists:get_value(grid, NewJsonData),
-            Grid = proplists:get_value(grid, JsonData),
+            Grid = proplists:get_value(grid, PreparedJsonData),
 
             if
                 NewGrid =/= Grid -> %If changed - add new tile
