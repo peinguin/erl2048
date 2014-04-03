@@ -213,9 +213,12 @@ move(Vector, State) ->
                 PreparedJsonData
             ),
 
+            NewGrid = proplists:get_value(grid, NewJsonData),
+            Grid = proplists:get_value(grid, JsonData),
+
             if
-                PreparedJsonData =/= NewJsonData -> %If changed - add new tile
-                    Grid = proplists:get_value(grid, NewJsonData),
+                NewGrid =/= Grid -> %If changed - add new tile
+                    
                     {struct, UserJsonData} = proplists:get_value(user, NewJsonData),
 
                     NewScore = proplists:get_value(score, NewJsonData),
@@ -229,12 +232,12 @@ move(Vector, State) ->
                         _Else -> undefined
                     end,
 
-                    Over = case movesAvailable(Grid) of
+                    Over = case movesAvailable(NewGrid) of
                         true -> false;
                         fale -> true % Game over!
                     end,
                     Removed = proplists:delete(grid, proplists:delete(over, NewJsonData)),
-                    {struct,[{ grid, addRandomTile(Grid) }, { over, Over } | Removed ]};
+                    {struct,[{ grid, addRandomTile(NewGrid) }, { over, Over } | Removed ]};
                 true -> %return state otherwise
                     {struct,PreparedJsonData}
             end
