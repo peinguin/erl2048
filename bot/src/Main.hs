@@ -1,3 +1,5 @@
-import Utils.Helpers
+import qualified Network.WebSockets as WS
+import App.Main
 
-main = print (take 2 (replicate 100 "127.0.0.1"))
+main :: IO ()
+main = WS.runClient "2048.php.poltava.ua" 8080 "/" app
