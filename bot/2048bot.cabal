@@ -18,7 +18,7 @@ cabal-version:       >=1.8
 executable 2048bot
   main-is:             Main.hs
   other-modules:       Helpers
-  build-depends:       base ==4.5.*, text, MissingH
+  build-depends:       base ==4.5.*
 
   hs-source-dirs:      src
                        src/Utils
