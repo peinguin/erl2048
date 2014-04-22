@@ -3,3 +3,4 @@ server/ebin/*
 server/erl_crash.dump
 server/.rebar
 server/db.sqlite3
+bot/dist
