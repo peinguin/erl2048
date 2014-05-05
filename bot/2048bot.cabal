@@ -17,9 +17,8 @@ cabal-version:       >=1.8
 
 executable 2048bot
   main-is:             Main.hs
-  other-modules:       Helpers
-  build-depends:       base ==4.5.*, WebSockets
+  other-modules:       
+  build-depends:       base ==4.5.*, websockets
 
   hs-source-dirs:      src
-                       src/App
   ghc-options:         -W
