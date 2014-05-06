@@ -165,7 +165,7 @@ moveTile(Cell, Vector, JsonData) ->
                         true -> false
                     end,
 
-                    Removed = proplists:delete(score, proplists:delete(won, proplists:delete(grid, JsonData))),
+                    Removed = my_proplists:delete_several([score, won, grid], JsonData),
 
                     [
                         {grid,NewGrid},
@@ -236,13 +236,14 @@ move(Vector, State) ->
                         true -> false;
                         fale -> true % Game over!
                     end,
-                    Removed = proplists:delete(grid, proplists:delete(over, NewJsonData)),
+                    Removed = my_proplists:delete_several([grid, over], NewJsonData),
                     {struct,[{ grid, addRandomTile(NewGrid) }, { over, Over } | Removed ]};
                 true -> %return state otherwise
                     {struct,PreparedJsonData}
             end
     end.
 
+%TODO: implement
 movesAvailable(_) ->
     true.
 

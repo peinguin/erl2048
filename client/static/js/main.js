@@ -23,18 +23,16 @@ var MyGame = function(){
     }else if(direction === 3){
       direction = 'left';
     }
-    websocket.send(JSON.stringify({
+    websocket.send({
       action:'move',
       value: direction
-    }));
+    });
   };
   self.restart = function(evt){
-    websocket.send(JSON.stringify({
-      action:'start'
-    }));
+    websocket.send({action:'start'});
   };
   self.keepPlaying = function(evt){
-
+    websocket.send({action:'keepPlaying'});
   };
   self.wsHandler = function(evt){
     var game = JSON.parse(evt.data);
@@ -107,6 +105,16 @@ var MyGame = function(){
         playername.value = game.user.name;
       }
     }
+
+    //lose
+    if(game.over){
+      actuator.message(false);
+    }
+
+    //win. Go on?
+    if(game.ask){
+      actuator.message(true);
+    }
   };
 
   inputManager = new KeyboardInputManager;
@@ -122,20 +130,20 @@ var MyGame = function(){
     toMove = false;
   };
   playername.onblur = function(){
-    websocket.send(JSON.stringify({
+    websocket.send({
       action:'newName',
       value: this.value
-    }));
+    });
     toMove = true;
   };
   playername.onchange = function(e){
     if(!toMove){
       return false;
     }
-    websocket.send(JSON.stringify({
+    websocket.send({
       action:'newName',
       value: this.value
-    }));
+    });
   };
 
   bestContainer.onmousemove = function(e){
