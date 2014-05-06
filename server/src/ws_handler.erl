@@ -32,13 +32,13 @@ websocket_handle({text, Msg}, Req, State) ->
             Won  = proplists:get_value(won, JsonData),
             KeepPlaying = proplists:get_value(keepPlaying, JsonData),
 
-            Response = if
+            Resp = if
                 Over =:= true -> {struct, [{over, true}]};
-                Won =:= true and KeepPlaying =:= false -> {struct, [{ask, true}]};
+                (Won =:= true) and (KeepPlaying =:= false) -> {struct, [{ask, true}]};
                 true -> TmpState
-            end
+            end,
 
-            {TmpState, TmpState};
+            {TmpState, Resp};
         "newName" ->
             NewName = proplists:get_value(<<"value">>, Message),
             JsonData = element(2, State),
@@ -59,7 +59,7 @@ websocket_handle({text, Msg}, Req, State) ->
                 {struct, [{ user, { struct, [ { name, NewName },{ id, Id } ] } }]}
             };
         "keepPlaying" ->
-            TmpState = {struct, [ { keepPlaying, true } | proplists:delete(keepPlaying, JsonData) ]},
+            TmpState = {struct, [ { keepPlaying, true } | proplists:delete(keepPlaying, element(2, State)) ]},
             {TmpState, TmpState};
         _Else -> State
     end,
