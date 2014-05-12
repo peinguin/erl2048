@@ -151,7 +151,7 @@ var MyGame = function(){
     scoresEl.style.left = e.pageX + 5 + 'px';
     scoresEl.style.top = e.pageY + 5 + 'px';
   }
-  bestContainer.onmouseout = function(){console.log('dsdds');
+  bestContainer.onmouseout = function(){
     scoresEl.style.display = 'none';
   }
 
