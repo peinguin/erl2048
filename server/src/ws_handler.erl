@@ -27,7 +27,7 @@ websocket_handle({text, Msg}, Req, State) ->
             TmpState = game:move(list_to_atom(binary_to_list(proplists:get_value(<<"value">>, Message))), State),
 
             %Checking for won or lose
-            {struct, JsonData} = State,
+            {struct, JsonData} = TmpState,
             Over = proplists:get_value(over, JsonData),
             Won  = proplists:get_value(won, JsonData),
             KeepPlaying = proplists:get_value(keepPlaying, JsonData),

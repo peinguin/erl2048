@@ -30,14 +30,26 @@ var MyGame = function(){
   };
   self.restart = function(evt){
     websocket.send({action:'start'});
+    actuator.continue();
   };
   self.keepPlaying = function(evt){
     websocket.send({action:'keepPlaying'});
+    actuator.continue();
   };
   self.wsHandler = function(evt){
     var game = JSON.parse(evt.data);
 
-    if(game.grid){
+    //win. Go on?
+    if(game.ask){
+      actuator.message(true);
+    }
+
+    //lose
+    else if(game.over){
+      actuator.message(false);
+    }
+
+    else if(game.grid){
 
       var grid = {cells: []};
       game.grid.forEach(function (column, y) {
@@ -105,16 +117,7 @@ var MyGame = function(){
         playername.value = game.user.name;
       }
     }
-
-    //lose
-    if(game.over){
-      actuator.message(false);
-    }
-
-    //win. Go on?
-    if(game.ask){
-      actuator.message(true);
-    }
+    
   };
 
   inputManager = new KeyboardInputManager;
