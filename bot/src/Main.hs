@@ -1,47 +1,71 @@
 module Main ( main ) where
 
-import qualified Network.WebSockets as WS
-import Control.Concurrent (forkIO)
-import Control.Monad (forever, unless)
-import Control.Monad.IO.Class (liftIO)
-import qualified Data.ByteString.Lazy.Char8 as BL
-import qualified Data.ByteString.Char8 as B
-import Data.Aeson
 import Control.Applicative ((<$>), (<*>), empty)
+import Control.Monad.Trans (liftIO)
+
 import qualified Data.Text as Text
+import qualified Data.Text.IO as TextIO(putStrLn)
+import qualified Data.Aeson as Aeson
+import qualified Network.WebSockets as WS
 
-data Action = Action { action :: String, value :: String}
-	 deriving (Show)
+import qualified Data.HashMap.Strict as H
 
-instance ToJSON Action where
-  toJSON (Action xV yV) = object [
-    x .= xV,
-    y .= yV ] where
-    x = Text.pack("x")
-    y = Text.pack("y")
-instance FromJSON Action where
-  parseJSON (Object v) = Action <$>
-                         v .: "action" <*>
-                         v .: "value"
-  parseJSON _ = empty
+data Action = Action {
+  action :: String,
+  value :: Maybe String
+}deriving (Show)
+
+data PreviousPosition = Nothing | PreviousPosition { x :: Integer, y :: Integer}
+data Cell = Cell { value :: Integer, mergedFrom :: [Cell], previousPosition :: PreviousPosition }
+data Score = Score { name :: String, score :: Integer }
+data User = User { id :: Integer, user :: String }
+
+data Game = Game {
+  grid        :: [[Cell]],
+  user        :: User,
+  score       :: Integer,
+  scores      :: [Score],
+  won         :: Bool,
+  over        :: Bool,
+  keepPlaying :: Bool
+} deriving (Show)
+
+instance Aeson.ToJSON Action where
+  toJSON (Action actionV valueV) = Aeson.object [
+	action Aeson..= actionV,
+	value Aeson..= valueV ] where
+	action = Text.pack("action")
+	value = Text.pack("value")
+instance Aeson.FromJSON Game where
+	parseJSON (Aeson.Object v) = Game <$>
+                                     v Aeson..: Text.pack("grid") <*>
+                                     v Aeson..: Text.pack("user") <*>
+                                     v Aeson..: Text.pack("score") <*>
+                                     v Aeson..: Text.pack("scores") <*>
+                                     v Aeson..: Text.pack("won") <*>
+                                     v Aeson..: Text.pack("over") <*>
+                                     v Aeson..: Text.pack("keepPlaying")
+	parseJSON _ = empty
 
 main :: IO ()
 main = WS.runClient "127.0.0.1" 8081 "/websocket" app
 
 app :: WS.ClientApp ()
 app conn = do
-    putStrLn "Connected!"
+	WS.sendTextData conn (Aeson.encode Action {action = "start", value = Nothing })
+        
+        loop conn
+        
+	WS.sendClose conn ( Text.pack "Bye!" )
 
-    -- Fork a thread that writes WS data to stdout
-    _ <- forkIO $ forever $ handler
-
-    let start = Action "start"
-    print start
-    WS.sendTextData conn $ encode . start
-
-    WS.sendClose conn
-
-handler :: WS.ClientApp () -> IO ()
-handler conn = do
-	msg <- WS.receiveData conn
-	liftIO $ B.putStrLn msg
+loop :: WS.ClientApp ()
+loop conn =
+  Aeson.decode <$> WS.receiveData conn >>=
+  print
+-- >>
+--  loop
+--   let decoded = Aeson.decode =<< 
+--   in print decoded
+   --decoded <- liftIO $ Aeson.decode msg
+   --print decode
+--   loop

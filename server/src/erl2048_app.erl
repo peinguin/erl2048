@@ -18,7 +18,7 @@ start(_Type, _Args) ->
         ]}
     ]),
     {ok, _} = db:start_link(),
-    cowboy:start_http(http, 100, [{port, 8080}],
+    cowboy:start_http(http, 100, [{port, 8081}],
         [{env, [{dispatch, Dispatch}]}]).
 
 start() ->

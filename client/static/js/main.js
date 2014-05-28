@@ -1,4 +1,4 @@
-var SERVER = 'ws://' + location.hostname + ':8080/websocket';
+var SERVER = 'ws://' + location.hostname + ':8081/websocket';
 
 var MyGame = function(){
   var self = this,
