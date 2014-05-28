@@ -28,6 +28,9 @@ var Websocket = function(wsHost){
     };
   },
   this.send = function(message) {
+    if(typeof message !== 'string'){
+      message = JSON.stringify(message);
+    }
     if(websocket.readyState == websocket.OPEN){
       websocket.send(message);
     } else {

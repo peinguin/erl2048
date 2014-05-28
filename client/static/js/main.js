@@ -1,4 +1,4 @@
-var SERVER = 'ws://' + location.hostname + ':8080/websocket';
+var SERVER = 'ws://' + location.hostname + ':8081/websocket';
 
 var MyGame = function(){
   var self = this,
@@ -23,23 +23,33 @@ var MyGame = function(){
     }else if(direction === 3){
       direction = 'left';
     }
-    websocket.send(JSON.stringify({
+    websocket.send({
       action:'move',
       value: direction
-    }));
+    });
   };
   self.restart = function(evt){
-    websocket.send(JSON.stringify({
-      action:'start'
-    }));
+    websocket.send({action:'start'});
+    actuator.continue();
   };
   self.keepPlaying = function(evt){
-
+    websocket.send({action:'keepPlaying'});
+    actuator.continue();
   };
   self.wsHandler = function(evt){
     var game = JSON.parse(evt.data);
 
-    if(game.grid){
+    //win. Go on?
+    if(game.ask){
+      actuator.message(true);
+    }
+
+    //lose
+    else if(game.over){
+      actuator.message(false);
+    }
+
+    else if(game.grid){
 
       var grid = {cells: []};
       game.grid.forEach(function (column, y) {
@@ -107,6 +117,7 @@ var MyGame = function(){
         playername.value = game.user.name;
       }
     }
+    
   };
 
   inputManager = new KeyboardInputManager;
@@ -122,20 +133,20 @@ var MyGame = function(){
     toMove = false;
   };
   playername.onblur = function(){
-    websocket.send(JSON.stringify({
+    websocket.send({
       action:'newName',
       value: this.value
-    }));
+    });
     toMove = true;
   };
   playername.onchange = function(e){
     if(!toMove){
       return false;
     }
-    websocket.send(JSON.stringify({
+    websocket.send({
       action:'newName',
       value: this.value
-    }));
+    });
   };
 
   bestContainer.onmousemove = function(e){
@@ -143,7 +154,7 @@ var MyGame = function(){
     scoresEl.style.left = e.pageX + 5 + 'px';
     scoresEl.style.top = e.pageY + 5 + 'px';
   }
-  bestContainer.onmouseout = function(){console.log('dsdds');
+  bestContainer.onmouseout = function(){
     scoresEl.style.display = 'none';
   }
 

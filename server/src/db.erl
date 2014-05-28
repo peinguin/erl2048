@@ -32,7 +32,6 @@ insert(Score, Player) ->
         length(Rows) > 0  -> element(1,hd(Rows));
         true -> 0
     end,
-erlang:display({Score,DBScore}),
 
     if Score > DBScore ->
         sqlite3:delete(db, scores, {userid, Player}),

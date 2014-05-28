@@ -3,3 +3,6 @@ server/ebin/*
 server/erl_crash.dump
 server/.rebar
 server/db.sqlite3
+server/nohup.out
+bot/dist
+erl_crash.dump
