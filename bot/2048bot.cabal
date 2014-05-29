@@ -18,7 +18,7 @@ cabal-version:       >=1.8
 executable 2048bot
   main-is:             Main.hs
   other-modules:       
-  build-depends:       base ==4.5.*, text, websockets, aeson, mtl, unordered-containers
+  build-depends:       base ==4.5.*, text, websockets, aeson, mtl, unordered-containers, bytestring
 
   hs-source-dirs:      src
   ghc-options:         -W
