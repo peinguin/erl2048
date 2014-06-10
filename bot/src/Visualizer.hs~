@@ -1,0 +1,15 @@
+module Visualizer
+(
+  init
+)
+where
+
+import Graphics.QML
+
+init :: IO
+init = do
+  ctx <- newObject clazz ()
+  
+  runEngineLoop defaultEngineConfig {
+  initialDocument = fileDocument doc,
+  contextObject = Just $ anyObjRef ctx}

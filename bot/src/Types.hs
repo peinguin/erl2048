@@ -1,16 +1,27 @@
-module Types (Game(..), Action(..)) where
+module Types (Game(..), Action(..), App(..)) where
 
 import Control.Applicative ((<$>), (<*>), empty)
 
 import qualified Data.Text as Text
 import qualified Data.Aeson as Aeson
+import qualified Network.WebSockets as WS
+import qualified Data.IORef as IORef
+import qualified Graphics.QML as QML
+
+data App =
+  App
+  WS.Connection
+  (IORef.IORef Text.Text)
+  (IORef.IORef Text.Text)
+  (IORef.IORef Text.Text)
+  (QML.SignalKey (IO ()))
 
 data Action = Action {
   action :: String,
   value :: Maybe String
 }deriving (Show)
-data Cell = Cell { cost :: Integer, mergedFrom :: Maybe [Cell], previousPosition :: Maybe PreviousPosition} deriving (Show)
-data PreviousPosition = PreviousPosition { x :: Integer, y :: Integer} deriving (Show)
+data Cell = Cell Integer (Maybe [Cell]) (Maybe PreviousPosition) deriving (Show)
+data PreviousPosition = PreviousPosition Integer Integer deriving (Show)
 {-
 data Score = Score { name :: String, score :: Integer } deriving (Show)
 data User = User {
