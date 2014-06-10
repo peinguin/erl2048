@@ -17,8 +17,7 @@ Rectangle {
                 x: 100;
                 width: 140;
                 font.pixelSize: 30;
-                id: score;
-                text: '40000';
+                text: score;
                 }
             }
         Rectangle{
@@ -32,8 +31,7 @@ Rectangle {
                 x: 80;
                 width: 160;
                 font.pixelSize: 30;
-                id: best;
-                text: "4086";
+                text: best;
                 }
             }
     }

@@ -3,8 +3,9 @@ module Main ( main ) where
 import qualified Data.Text as Text
 import qualified Data.Aeson as Aeson
 import qualified Network.WebSockets as WS
-import Data.IORef
-import Graphics.QML
+import qualified Control.Concurrent as Concurrent
+import qualified Data.IORef as IORef
+import qualified Graphics.QML as QML
 
 import Types
 import qualified Visualizer as V
@@ -15,14 +16,14 @@ main = WS.runClient "127.0.0.1" 8081 "/websocket" app
 app :: WS.ClientApp ()
 app conn = do
   -- display references
-  stateBest  <- newIORef $ Text.pack ""
-  stateScore <- newIORef $ Text.pack ""
-  stateGrid  <- newIORef $ Text.pack ""
-  skey <- newSignalKey
+  stateBest  <- IORef.newIORef $ Text.pack "0"
+  stateScore <- IORef.newIORef $ Text.pack "0"
+  stateGrid  <- IORef.newIORef $ Text.pack ""
+  skey <- QML.newSignalKey
   
   let app = App conn stateBest stateScore stateGrid skey
   
-  V.init app
+  Concurrent.forkIO $ V.init app
   WS.sendTextData conn (Aeson.encode Action {action = "start", value = Nothing })
   loop app
   WS.sendClose conn ( Text.pack "Bye!" )
@@ -33,7 +34,7 @@ loop app = do
   res <- WS.receiveData conn
   let game = Aeson.decode res :: Maybe Game
   let act = decision (game)
-  updateScores stateScore game
+  updateScores app
   case act of
     Nothing -> return ()
     Just act -> WS.sendTextData conn (Aeson.encode act) >> loop app
@@ -41,6 +42,8 @@ loop app = do
 decision :: Maybe Game -> Maybe Action
 decision _ = Nothing
 
-updateScores :: IORef Text.Text -> Maybe Game -> IO ()
-updateScores stateScore _ = do
-  writeIORef stateScore (Text.pack "100")
+updateScores :: App -> IO ()
+updateScores (App _ _ stateScore _ skey) = do
+  putStrLn "Hello, World!"
+  IORef.writeIORef stateScore (Text.pack "100")
+  QML.fireSignal skey
