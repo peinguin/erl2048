@@ -1,4 +1,9 @@
-module Types (Game(..), Action(..), App(..)) where
+module Types (
+  Game(..),
+  Action(..),
+  App(..),
+  getBest
+) where
 
 import Control.Applicative ((<$>), (<*>), empty)
 
@@ -11,10 +16,11 @@ import qualified Graphics.QML as QML
 data App =
   App
   WS.Connection
-  (IORef.IORef Text.Text)
-  (IORef.IORef Text.Text)
-  (IORef.IORef Text.Text)
+  (QML.ObjRef ())
   (QML.SignalKey (IO ()))
+  (IORef.IORef Text.Text)
+  (IORef.IORef Text.Text)
+  (IORef.IORef Text.Text)
 
 data Action = Action {
   action :: String,
@@ -31,7 +37,7 @@ data User = User {
 -}
 data Game = Game {
 --  player      :: User,
---  currScore   :: Integer,
+  currScore   :: Integer,
 --  scores      :: [Score],
 --  won         :: Bool,
 --  over        :: Bool,
@@ -48,7 +54,7 @@ instance Aeson.ToJSON Action where
 instance Aeson.FromJSON Game where
 	parseJSON (Aeson.Object v) = Game <$> 
 --                                     v Aeson..: Text.pack("user") <*>
---                                     v Aeson..: Text.pack("score") <*>
+                                     v Aeson..: Text.pack("score") <*>
 --                                     v Aeson..: Text.pack("scores") <*>
 --                                     v Aeson..: Text.pack("won") <*>
 --                                     v Aeson..: Text.pack("over") <*>
@@ -78,3 +84,25 @@ instance Aeson.FromJSON PreviousPosition where
                                      v Aeson..: Text.pack("x") <*>
                                      v Aeson..: Text.pack("y")
 	parseJSON _ = empty
+
+getBest :: [[Maybe Cell]] -> Integer
+getBest [] = 0
+getBest [x] =
+  getBestFromRow(x)
+getBest (x:xs)   
+    | bestFromRow >= bestFromTail = bestFromRow  
+    | otherwise = bestFromTail
+    where
+      bestFromRow = getBestFromRow(x)
+      bestFromTail = getBest(xs)
+
+getBestFromRow :: [Maybe Cell] -> Integer
+getBestFromRow [] = 0
+getBestFromRow [Nothing] = 0
+getBestFromRow [Just (Cell x _ _)] = x
+getBestFromRow (Nothing:xs) = getBestFromRow(xs)
+getBestFromRow (Just (Cell x _ _):xs)
+  | x >= bestFromTail = x
+  | otherwise = bestFromTail
+    where
+      bestFromTail = getBestFromRow(xs)
