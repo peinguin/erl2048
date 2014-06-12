@@ -20,7 +20,7 @@ Data-files:    *.qml
 executable 2048bot
   main-is:             Main.hs
   other-modules:       
-  build-depends:       base ==4.6.*, text, websockets, aeson, mtl, unordered-containers, bytestring, hsqml
+  build-depends:       base ==4.6.*, text, websockets, aeson, mtl, unordered-containers, bytestring, hsqml, tagged
 
   hs-source-dirs:      src
   ghc-options:         -W

@@ -25,8 +25,9 @@ loop app = do
   res <- WS.receiveData conn
   let game = Aeson.decode res :: Maybe Game
   let act = decision (game)
-  updateScores app game
-  updateBest app game
+
+  updateGui app game
+
   case act of
     Nothing -> return ()
     Just act -> WS.sendTextData conn (Aeson.encode act) >> loop app
@@ -34,12 +35,9 @@ loop app = do
 decision :: Maybe Game -> Maybe Action
 decision _ = Nothing
 
-updateScores :: App -> Maybe Game -> IO ()
-updateScores _ Nothing = return ()
-updateScores app (Just game) = do
+updateGui :: App -> Maybe Game -> IO ()
+updateGui _ Nothing = return ()
+updateGui app (Just game) = do
   V.redrawScores app . show $ currScore game
-
-updateBest :: App -> Maybe Game -> IO ()
-updateBest _ Nothing = return ()
-updateBest app (Just game) = do
   V.redrawBest app . show $ getBest $ grid game
+  V.redrawGrid app $ grid game
