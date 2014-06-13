@@ -1,68 +1,80 @@
-{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE EmptyDataDecls, DeriveDataTypeable, TypeFamilies #-}
 module Visualizer
 (
   Visualizer.init,
-  Visualizer.redrawScores,
-  Visualizer.redrawBest,
-  Visualizer.redrawGrid
+  Visualizer.QMLGame(..),
+  Visualizer.update
 )
 where
 
 import qualified Graphics.QML as QML
-import qualified Data.IORef as IORef
-import qualified Data.Text as Text
 import qualified Control.Concurrent as Concurrent
-
+import qualified Data.IORef as IORef
+import qualified Data.Proxy as Proxy
+import qualified Data.Typeable as Typeable
 import Paths_2048bot
-import Types
+import qualified Types as T
 
-instance QML.Marshal Cell where
-    type MarshalMode Cell c d = QML.ModeObjFrom Cell c
-    marshaller = QML.fromMarshaller QML.fromObjRef
-
-instance QML.DefaultClass Cell where
-  classMembers = [
-    QML.defPropertyRO "value" $ (\(Cell value _ _) -> return value)]
-
-init :: IO (
-  QML.ObjRef (),
-  QML.SignalKey (IO()),
-  IORef.IORef Text.Text,
-  IORef.IORef Text.Text,
-  IORef.IORef Text.Text)
+init :: IO (QML.ObjRef QMLGame)
 init = do
-  -- display references
-  stateBest  <- IORef.newIORef $ Text.pack "0"
-  stateScore <- IORef.newIORef $ Text.pack "0"
-  stateGrid  <- IORef.newIORef $ Text.pack ""
-  skey   <- QML.newSignalKey
-  
-  clazz <- QML.newClass [
-    QML.defPropertySigRO' "best" skey (\_ ->
-                                    IORef.readIORef stateBest),
-    QML.defPropertySigRO' "score" skey (\_ ->
-                                    IORef.readIORef stateScore),
-    QML.defSignal  "grid" skey]
-           
-  ctx <- QML.newObject clazz ()
+  stateScores <- IORef.newIORef 0
+  stateGrid   <- IORef.newIORef []
+  let sqlgame = QMLGame stateScores stateGrid
+  game <- QML.newObjectDC sqlgame 
   doc <- getDataFileName "main.qml"
   Concurrent.forkIO $ QML.runEngineLoop QML.defaultEngineConfig {
     QML.initialDocument = QML.fileDocument doc,
-    QML.contextObject = Just $ QML.anyObjRef ctx}
-  return (ctx, skey, stateBest, stateScore, stateGrid)
+    QML.contextObject = Just $ QML.anyObjRef  game}
+  return game
 
-redrawScores :: App -> [Char] -> IO ()
-redrawScores (App _ ctx skey _ stateScore _) val = do
-  print $ QML.fromObjRef ctx
-  IORef.writeIORef stateScore (Text.pack val)
-  QML.fireSignal skey (QML.anyObjRef ctx)
+data QMLGame = QMLGame
+               (IORef.IORef Int)
+               (IORef.IORef [[Maybe T.Cell]])
+  deriving (Typeable.Typeable)
 
-redrawBest :: App -> [Char] -> IO ()
-redrawBest (App _ ctx skey stateBest _ _) val = do
-  IORef.writeIORef stateBest (Text.pack val)
-  QML.fireSignal skey (QML.anyObjRef ctx)
+getGrid :: QMLGame -> IO (QML.ObjRef (Maybe T.Cell))
+getGrid ( QMLGame _ grid ) = QML.newObjectDC Nothing -- =<< IORef.readIORef grid
 
-redrawGrid :: App -> [[Maybe Cell]] -> IO ()
-redrawGrid (App _ ctx skey _ _ stateGrid) _ = do
-  IORef.writeIORef stateGrid $ Text.pack "0"
-  QML.fireSignal skey (QML.anyObjRef ctx)
+update :: QML.ObjRef QMLGame -> Maybe T.Game -> IO()
+update _ Nothing = return ()
+update qmlgameRef (Just (T.Game scores grid)) = do
+  let qmlgame = QML.fromObjRef qmlgameRef
+  let (QMLGame scoresRef gridRef) = qmlgame
+  IORef.writeIORef scoresRef scores
+  IORef.writeIORef gridRef grid
+  QML.fireSignal (Proxy.Proxy :: Proxy.Proxy TheSignal) qmlgameRef
+
+data TheSignal deriving Typeable.Typeable
+instance QML.SignalKeyClass TheSignal where
+    type SignalParams TheSignal = IO ()        
+
+instance QML.Marshal T.Cell where
+    type MarshalMode T.Cell c d = QML.ModeObjFrom T.Cell c
+    marshaller = QML.fromMarshaller QML.fromObjRef
+
+instance QML.Marshal T.PreviousPosition where
+    type MarshalMode T.PreviousPosition c d = QML.ModeObjFrom T.PreviousPosition c
+    marshaller = QML.fromMarshaller QML.fromObjRef
+
+instance QML.DefaultClass T.Cell where
+  classMembers = [
+    QML.defPropertyRO "value" $ (\(T.Cell value _ _) -> return value)]
+
+instance QML.Marshal QMLGame where
+    type MarshalMode QMLGame c d = QML.ModeObjFrom QMLGame c
+    marshaller = QML.fromMarshaller QML.fromObjRef
+
+instance QML.DefaultClass QMLGame where
+  classMembers = [
+    QML.defPropertySigRO
+      "score"
+      (Proxy.Proxy :: Proxy.Proxy TheSignal)
+      (\(QMLGame currScore _) -> return =<< IORef.readIORef currScore),
+    QML.defPropertySigRO "grid"  (Proxy.Proxy :: Proxy.Proxy TheSignal) getGrid,
+      QML.defPropertySigRO "best"
+      (Proxy.Proxy :: Proxy.Proxy TheSignal)
+      (\game -> do
+        let (QMLGame _ gridRef) = game
+        grid <- IORef.readIORef gridRef
+        return $ T.getBest grid),
+    QML.defSignal "update" (Proxy.Proxy :: Proxy.Proxy TheSignal)]

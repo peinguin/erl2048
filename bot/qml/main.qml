@@ -268,11 +268,6 @@ Rectangle {
     }
 
     Component.onCompleted: {
-console.log('addSignal',addSignal)
-        addSignal.connect(redraw);
-    }
-
-    function redraw(numbers){
-        console.log('redraw',numbers);
+        onUpdate: console.log(grid)
     }
 }

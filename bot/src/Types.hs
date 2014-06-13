@@ -1,10 +1,9 @@
 {-# LANGUAGE DeriveDataTypeable #-}
-
 module Types (
-  Game(..),
   Action(..),
-  App(..),
   Cell(..),
+  Game(..),
+  PreviousPosition(..),
   getBest
 ) where
 
@@ -12,37 +11,22 @@ import Control.Applicative ((<$>), (<*>), empty)
 
 import qualified Data.Text as Text
 import qualified Data.Aeson as Aeson
-import qualified Network.WebSockets as WS
-import qualified Data.IORef as IORef
-import qualified Graphics.QML as QML
 import qualified Data.Typeable as Typeable
 
-data App =
-  App
-  WS.Connection
-  (QML.ObjRef ())
-  (QML.SignalKey (IO ()))
-  (IORef.IORef Text.Text)
-  (IORef.IORef Text.Text)
-  (IORef.IORef Text.Text)
-
-data Action = Action {
-  action :: String,
-  value :: Maybe String
-}deriving (Show)
+data Action = Action String (Maybe String) deriving (Show)
 data Cell = Cell Int (Maybe [Cell]) (Maybe PreviousPosition) deriving (Typeable.Typeable, Show)
-data PreviousPosition = PreviousPosition Integer Integer deriving (Show)
+data PreviousPosition = PreviousPosition Int Int deriving (Typeable.Typeable, Show)
 {-
-data Score = Score { name :: String, score :: Integer } deriving (Show)
+data Score = Score { name :: String, score :: Int } deriving (Show)
 data User = User {
-  id       :: Maybe Integer,
+  id       :: Maybe Int,
   username :: Maybe String
 } deriving (Show)
 -}
 
 data Game = Game {
 --  player      :: User,
-  currScore   :: Integer,
+  currScore   :: Int,
 --  scores      :: [Score],
 --  won         :: Bool,
 --  over        :: Bool,
@@ -89,13 +73,13 @@ instance Aeson.FromJSON PreviousPosition where
                                      v Aeson..: Text.pack("x") <*>
                                      v Aeson..: Text.pack("y")
 	parseJSON _ = empty
-
+        
 getBest :: [[Maybe Cell]] -> Int
 getBest [] = 0
 getBest [x] =
   getBestFromRow(x)
 getBest (x:xs)   
-    | bestFromRow >= bestFromTail = bestFromRow  
+    | bestFromRow >= bestFromTail = bestFromRow
     | otherwise = bestFromTail
     where
       bestFromRow = getBestFromRow(x)

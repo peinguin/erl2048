@@ -3,8 +3,9 @@ module Main ( main ) where
 import qualified Data.Text as Text
 import qualified Data.Aeson as Aeson
 import qualified Network.WebSockets as WS
+import qualified Graphics.QML as QML
 
-import Types
+import qualified Types as T
 import qualified Visualizer as V
 
 main :: IO ()
@@ -12,32 +13,23 @@ main = WS.runClient "127.0.0.1" 8081 "/websocket" app
 
 app :: WS.ClientApp ()
 app conn = do
-  (ctx, skey, stateBest, stateScore, stateGrid) <- V.init
-  let app = App conn ctx skey stateBest stateScore stateGrid
+  game <- V.init
   
-  WS.sendTextData conn (Aeson.encode Action {action = "start", value = Nothing })
-  loop app
+  WS.sendTextData conn (Aeson.encode $ T.Action "start" Nothing)
+  loop game conn
   WS.sendClose conn ( Text.pack "Bye!" )
 
-loop :: App -> IO ()
-loop app = do
-  let (App conn _ _ _ _ _) = app
+loop :: QML.ObjRef V.QMLGame -> WS.Connection -> IO ()
+loop game conn = do
   res <- WS.receiveData conn
-  let game = Aeson.decode res :: Maybe Game
-  let act = decision (game)
+  let newGame = Aeson.decode res :: Maybe T.Game
+  let act = decision (newGame)
 
-  updateGui app game
+  V.update game newGame
 
   case act of
     Nothing -> return ()
-    Just act -> WS.sendTextData conn (Aeson.encode act) >> loop app
+    Just act -> WS.sendTextData conn (Aeson.encode act) >> loop game conn
 
-decision :: Maybe Game -> Maybe Action
-decision _ = Nothing
-
-updateGui :: App -> Maybe Game -> IO ()
-updateGui _ Nothing = return ()
-updateGui app (Just game) = do
-  V.redrawScores app . show $ currScore game
-  V.redrawBest app . show $ getBest $ grid game
-  V.redrawGrid app $ grid game
+decision :: Maybe T.Game -> Maybe T.Action
+decision _ = Nothing  
