@@ -1,0 +1,21 @@
+function processor(){
+    purge();
+    var tmp = numbers
+    grid.forEach(function(row, y, rows){
+	row.forEach(function(cell, x){
+	    if(cell){
+		var params = {
+		    "col":x,
+		    "row":y,
+		    previousPosition:previousPosition
+		};
+		var newNumber = number.createObject(
+		  cellGrid,
+		  params);
+		tmp.push(newNumber)		
+	    }
+	});
+    });
+    numbers = tmp
+}
+

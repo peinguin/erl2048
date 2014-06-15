@@ -4,6 +4,7 @@ import qualified Data.Text as Text
 import qualified Data.Aeson as Aeson
 import qualified Network.WebSockets as WS
 import qualified Graphics.QML as QML
+import qualified Control.Concurrent as Concurrent
 
 import qualified Types as T
 import qualified Visualizer as V
@@ -23,14 +24,18 @@ app conn = do
 loop :: QML.ObjRef V.QMLGame -> WS.Connection -> IO ()
 loop game conn = do
   res <- WS.receiveData conn
-  print res
   let newGame = Aeson.decode res :: Maybe T.Game
   let act = decision (newGame)
   V.update game newGame
 
   case act of
     Nothing -> return ()
-    Just act -> WS.sendTextData conn (Aeson.encode act) >> loop game conn
+    Just act -> do
+      WS.sendTextData conn (Aeson.encode act)
+      Concurrent.threadDelay 2000000
+      loop game conn
 
 decision :: Maybe T.Game -> Maybe T.Action
-decision _ = Nothing  
+decision Nothing = Nothing
+decision (Just (T.Game _ _ _ _ _ _ _)) =
+  (Just (T.Action "move" (Just "left")))

@@ -1,5 +1,5 @@
 import QtQuick 2.0
-
+import "main.js" as Main
 Rectangle {
     id: app
     width: 450; height: 495
@@ -45,16 +45,21 @@ Rectangle {
                    number <= 2048 ? "#edc22e" :
                                     "#3c3a32"
 
-            property int col
-            property int row
+            property int colStart
+            property int rowStart
 
-            property int number: Math.random() > 0.9 ? 4 : 2
+            property int colEnd
+            property int rowEnd
 
-            x: cells.getAt(col, row).x
-            y: cells.getAt(col, row).y
-            width: cells.getAt(col, row).width
-            height: cells.getAt(col, row).height
-            radius: cells.getAt(col, row).radius
+            property int scale
+
+            property int number
+
+            x:      cells.getAt(colStart, rowStart).x
+            y:      cells.getAt(colStart, rowStart).y
+            width:  cells.getAt(colStart, rowStart).width
+            height: cells.getAt(colStart, rowStart).height
+            radius: cells.getAt(colStart, rowStart).radius
 
             Text {
                 id: text
@@ -73,50 +78,60 @@ Rectangle {
                 text: parent.number > 1 ? parent.number : ""
             }
 
-            Behavior on x {
-                NumberAnimation {
-                    duration: 50
-                    easing {
-                        type: Easing.InOutQuad
-                    }
-                }
-            }
-            Behavior on y {
-                NumberAnimation {
-                    duration: 50
-                    easing {
-                        type: Easing.InOutQuad
-                    }
-                }
-            }
 
-            transform: Scale {
-                id: zoomIn
-                origin.x: colorRect.width / 2
-                origin.y: colorRect.height / 2
-                xScale: 0
-                yScale: 0
-                Behavior on xScale {
-                    NumberAnimation {
-                        duration: 200
-                        easing {
-                            type: Easing.InOutQuad
+            transform: [
+                Scale {
+                    id: zoomIn
+                    xScale: scale
+                    yScale: scale
+                    origin.x: colorRect.width / 2
+                    origin.y: colorRect.height / 2
+                    Behavior on xScale {
+                        NumberAnimation {
+                            duration: 300
+                            easing {
+                                type: Easing.InOutQuad
+                            }
+                        }
+                    }
+                    Behavior on yScale {
+                        NumberAnimation {
+                            duration: 300
+                            easing {
+                                type: Easing.InOutQuad
+                            }
+                        }
+                    }
+                },
+
+                Translate{
+                    id: translate
+                    x: 0
+                    y: 0
+                    Behavior on x {
+                        NumberAnimation {
+                            duration: 500
+                            easing {
+                                type: Easing.InOutQuad
+                            }
+                        }
+                    }
+                    Behavior on y {
+                        NumberAnimation {
+                            duration: 500
+                            easing {
+                                type: Easing.InOutQuad
+                            }
                         }
                     }
                 }
-                Behavior on yScale {
-                    NumberAnimation {
-                        duration: 200
-                        easing {
-                            type: Easing.InOutQuad
-                        }
-                    }
-                }
-            }
-
+            ]
             Component.onCompleted: {
+                var cell = cells.getAt(colEnd, rowEnd)
                 zoomIn.xScale = 1
                 zoomIn.yScale = 1
+                translate.x = cell.x - this.x
+                translate.y = cell.y - this.y
             }
         }
     }
@@ -237,18 +252,6 @@ Rectangle {
     }
 
     Component.onCompleted: {
-        updateSignal.connect(processor);
-    }
-
-    function processor(){
-        grid.forEach(function(row, index, rows){
-            row.forEach(function(cell){
-                if(cell){
-                    for(var i in cell){
-                        console.log(i,cell[i])
-                    }
-                }
-            });
-        });
+        updateSignal.connect(Main.processor);
     }
 }
