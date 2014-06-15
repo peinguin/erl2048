@@ -32,8 +32,36 @@ data QMLGame = QMLGame
                (IORef.IORef [[Maybe T.Cell]])
   deriving (Typeable.Typeable)
 
-getGrid :: QMLGame -> IO (QML.ObjRef (Maybe T.Cell))
-getGrid ( QMLGame _ grid ) = QML.newObjectDC Nothing -- =<< IORef.readIORef grid
+processGrid :: [[Maybe T.Cell]] -> IO [[Maybe (QML.ObjRef T.Cell)]]
+processGrid [] = return []
+processGrid [x] = do
+  clearX <- processRow x
+  return[clearX]
+processGrid (x:xs) = do
+  clearX <- processGrid [x]
+  clearXS <- processGrid xs
+  return $ clearX ++ clearXS
+
+processRow :: [Maybe T.Cell] -> IO [Maybe (QML.ObjRef T.Cell)]
+processRow [] = return []
+processRow [x] = do
+  clearX <- processCell x
+  return [clearX]
+processRow (x:xs) = do
+  clearX <- processRow [x]
+  clearXS <- processRow xs
+  return $ clearX ++ clearXS
+
+processCell :: Maybe T.Cell -> IO (Maybe (QML.ObjRef T.Cell))
+processCell Nothing = return Nothing
+processCell (Just cell) = do
+  cellRef <- QML.newObjectDC cell
+  return $ Just cellRef
+
+getGrid :: QMLGame -> IO [[Maybe (QML.ObjRef T.Cell)]]
+getGrid ( QMLGame _ gridRef ) = do
+  grid <- (IORef.readIORef gridRef )
+  processGrid grid
 
 update :: QML.ObjRef QMLGame -> Maybe T.Game -> IO()
 update _ Nothing = return ()
@@ -43,6 +71,9 @@ update qmlgameRef (Just (T.Game scores grid)) = do
   IORef.writeIORef scoresRef scores
   IORef.writeIORef gridRef grid
   QML.fireSignal (Proxy.Proxy :: Proxy.Proxy TheSignal) qmlgameRef
+
+instance Show (QML.ObjRef a) where
+    show _ = show "ObjRef"
 
 data TheSignal deriving Typeable.Typeable
 instance QML.SignalKeyClass TheSignal where
@@ -77,4 +108,5 @@ instance QML.DefaultClass QMLGame where
         let (QMLGame _ gridRef) = game
         grid <- IORef.readIORef gridRef
         return $ T.getBest grid),
-    QML.defSignal "update" (Proxy.Proxy :: Proxy.Proxy TheSignal)]
+    QML.defSignal "updateSignal" (Proxy.Proxy :: Proxy.Proxy TheSignal)]
+

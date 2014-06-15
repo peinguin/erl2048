@@ -18,6 +18,7 @@ app conn = do
   WS.sendTextData conn (Aeson.encode $ T.Action "start" Nothing)
   loop game conn
   WS.sendClose conn ( Text.pack "Bye!" )
+  print "Exited"
 
 loop :: QML.ObjRef V.QMLGame -> WS.Connection -> IO ()
 loop game conn = do

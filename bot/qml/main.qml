@@ -10,22 +10,6 @@ Rectangle {
     property int cols: 4
     property int rows: 4
 
-    function numberAt(col, row) {
-        for (var i = 0; i < numbers.length; i++) {
-            if (numbers[i].col == col && numbers[i].row == row)
-                return numbers[i]
-        }
-    }
-    function popNumberAt(col, row) {
-        var tmp = numbers
-        for (var i = 0; i < tmp.length; i++) {
-            if (tmp[i].col == col && tmp[i].row == row) {
-                tmp[i].destroy()
-                tmp.splice(i, 1)
-            }
-        }
-        numbers=tmp
-    }
     function purge() {
         var tmp = numbers
         for (var i = 0; i < tmp.length; i++) {
@@ -71,21 +55,6 @@ Rectangle {
             width: cells.getAt(col, row).width
             height: cells.getAt(col, row).height
             radius: cells.getAt(col, row).radius
-
-            function move(h, v) {
-                if (h == col && v == row)
-                    return false
-                if (app.numberAt(h, v)) {
-                    number += app.numberAt(h, v).number
-                    app.score += number
-                    if (number == finalValue)
-                        app.victory()
-                    app.popNumberAt(h, v)
-                }
-                col = h
-                row = v
-                return true
-            }
 
             Text {
                 id: text
@@ -268,6 +237,14 @@ Rectangle {
     }
 
     Component.onCompleted: {
-        onUpdate: console.log(grid)
+        updateSignal.connect(processor);
+    }
+
+    function processor(){
+        grid.forEach(function(row, index, rows){
+            row.forEach(function(cell){
+                console.log(cell && cell.value);
+            });
+        });
     }
 }
