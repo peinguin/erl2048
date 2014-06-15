@@ -27,11 +27,6 @@ init = do
     QML.contextObject = Just $ QML.anyObjRef  game}
   return game
 
-data QMLGame = QMLGame
-               (IORef.IORef Int)
-               (IORef.IORef [[Maybe T.Cell]])
-  deriving (Typeable.Typeable)
-
 processGrid :: [[Maybe T.Cell]] -> IO [[Maybe (QML.ObjRef T.Cell)]]
 processGrid [] = return []
 processGrid [x] = do
@@ -65,15 +60,41 @@ getGrid ( QMLGame _ gridRef ) = do
 
 update :: QML.ObjRef QMLGame -> Maybe T.Game -> IO()
 update _ Nothing = return ()
-update qmlgameRef (Just (T.Game scores grid)) = do
+update qmlgameRef (Just (T.Game _ scores _ _ _ _ grid)) = do
   let qmlgame = QML.fromObjRef qmlgameRef
   let (QMLGame scoresRef gridRef) = qmlgame
   IORef.writeIORef scoresRef scores
   IORef.writeIORef gridRef grid
   QML.fireSignal (Proxy.Proxy :: Proxy.Proxy TheSignal) qmlgameRef
 
-instance Show (QML.ObjRef a) where
-    show _ = show "ObjRef"
+
+processMergedFrom :: [T.Cell] -> IO [QML.ObjRef T.Cell]
+processMergedFrom [] = error "No Way!"
+processMergedFrom [x] =  do
+  cellRef <- QML.newObjectDC x
+  return [cellRef]
+processMergedFrom (x:xs) = do
+  clearX <- processMergedFrom [x]
+  clearXS <- processMergedFrom xs
+  return $ clearX ++ clearXS
+
+getMergedFrom :: Maybe [T.Cell] -> IO (Maybe [QML.ObjRef T.Cell])
+getMergedFrom Nothing = return Nothing
+getMergedFrom (Just cells) = do
+  processed <- processMergedFrom cells
+  return $ Just processed
+
+getPreviousPosition ::
+    Maybe T.PreviousPosition -> IO (Maybe (QML.ObjRef T.PreviousPosition))
+getPreviousPosition Nothing = return Nothing
+getPreviousPosition (Just ppos) = do
+  pposRef <- QML.newObjectDC ppos
+  return $ Just pposRef
+
+data QMLGame = QMLGame
+               (IORef.IORef Int)
+               (IORef.IORef [[Maybe T.Cell]])
+  deriving (Typeable.Typeable)
 
 data TheSignal deriving Typeable.Typeable
 instance QML.SignalKeyClass TheSignal where
@@ -87,9 +108,18 @@ instance QML.Marshal T.PreviousPosition where
     type MarshalMode T.PreviousPosition c d = QML.ModeObjFrom T.PreviousPosition c
     marshaller = QML.fromMarshaller QML.fromObjRef
 
+instance QML.DefaultClass T.PreviousPosition where
+    classMembers = [
+       QML.defPropertyRO "x" $ (\(T.PreviousPosition x _) -> return x),
+       QML.defPropertyRO "y" $ (\(T.PreviousPosition _ y) -> return y)]
+
 instance QML.DefaultClass T.Cell where
   classMembers = [
-    QML.defPropertyRO "value" $ (\(T.Cell value _ _) -> return value)]
+    QML.defPropertyRO "value"            $ (\(T.Cell value _ _) -> return value),
+    QML.defPropertyRO "mergedFrom"       $
+           (\(T.Cell _ mergedFrom _) -> getMergedFrom mergedFrom),
+    QML.defPropertyRO "previousPosition" $
+           (\(T.Cell _ _ previousPosition) -> getPreviousPosition previousPosition)]
 
 instance QML.Marshal QMLGame where
     type MarshalMode QMLGame c d = QML.ModeObjFrom QMLGame c

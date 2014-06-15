@@ -23,9 +23,9 @@ app conn = do
 loop :: QML.ObjRef V.QMLGame -> WS.Connection -> IO ()
 loop game conn = do
   res <- WS.receiveData conn
+  print res
   let newGame = Aeson.decode res :: Maybe T.Game
   let act = decision (newGame)
-
   V.update game newGame
 
   case act of

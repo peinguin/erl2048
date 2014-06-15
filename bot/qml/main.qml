@@ -243,7 +243,11 @@ Rectangle {
     function processor(){
         grid.forEach(function(row, index, rows){
             row.forEach(function(cell){
-                console.log(cell && cell.value);
+                if(cell){
+                    for(var i in cell){
+                        console.log(i,cell[i])
+                    }
+                }
             });
         });
     }

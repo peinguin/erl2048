@@ -16,21 +16,20 @@ import qualified Data.Typeable as Typeable
 data Action = Action String (Maybe String) deriving (Show)
 data Cell = Cell Int (Maybe [Cell]) (Maybe PreviousPosition) deriving (Typeable.Typeable, Show)
 data PreviousPosition = PreviousPosition Int Int deriving (Typeable.Typeable, Show)
-{-
-data Score = Score { name :: String, score :: Int } deriving (Show)
-data User = User {
-  id       :: Maybe Int,
-  username :: Maybe String
-} deriving (Show)
--}
+
+data Score = Score (Maybe String) Int deriving (Show)
+data User = User 
+  (Maybe Int)
+  (Maybe String)
+  deriving (Show)
 
 data Game = Game {
---  player      :: User,
+  player      :: User,
   currScore   :: Int,
---  scores      :: [Score],
---  won         :: Bool,
---  over        :: Bool,
---  keepPlaying :: Bool,
+  scores      :: [Score],
+  won         :: Bool,
+  over        :: Bool,
+  keepPlaying :: Bool,
   grid        :: [[Maybe Cell]]
 } deriving (Show)
 
@@ -42,12 +41,12 @@ instance Aeson.ToJSON Action where
 	value = Text.pack("value")
 instance Aeson.FromJSON Game where
 	parseJSON (Aeson.Object v) = Game <$> 
---                                     v Aeson..: Text.pack("user") <*>
+                                     v Aeson..: Text.pack("user") <*>
                                      v Aeson..: Text.pack("score") <*>
---                                     v Aeson..: Text.pack("scores") <*>
---                                     v Aeson..: Text.pack("won") <*>
---                                     v Aeson..: Text.pack("over") <*>
---                                     v Aeson..: Text.pack("keepPlaying") <*>
+                                     v Aeson..: Text.pack("scores") <*>
+                                     v Aeson..: Text.pack("won") <*>
+                                     v Aeson..: Text.pack("over") <*>
+                                     v Aeson..: Text.pack("keepPlaying") <*>
                                      v Aeson..: Text.pack("grid")
 	parseJSON _ = empty
 instance Aeson.FromJSON Cell where
@@ -56,7 +55,7 @@ instance Aeson.FromJSON Cell where
                                      v Aeson..: Text.pack("mergedFrom") <*>
                                      v Aeson..: Text.pack("previousPosition")
 	parseJSON _ = empty
-{-
+
 instance Aeson.FromJSON User where
 	parseJSON (Aeson.Object v) = User <$>
                                      v Aeson..: Text.pack("id") <*>
@@ -67,7 +66,7 @@ instance Aeson.FromJSON Score where
                                      v Aeson..: Text.pack("name") <*>
                                      v Aeson..: Text.pack("score")
 	parseJSON _ = empty
--}
+
 instance Aeson.FromJSON PreviousPosition where
 	parseJSON (Aeson.Object v) = PreviousPosition <$>
                                      v Aeson..: Text.pack("x") <*>
